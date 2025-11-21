@@ -4,6 +4,7 @@
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/log.h"
+#include "esphome/core/hal.h"
 
 namespace esphome {
 namespace gree {
@@ -55,6 +56,29 @@ enum ac_louver_H: uint8_t {
 
 #define GREE_START_BYTE 0x7E
 #define GREE_RX_BUFFER_SIZE 52
+#define GREE_PACKET_TIMEOUT_MS 1000
+
+// Packet byte positions
+namespace gree_packet {
+  constexpr uint8_t POS_FORCE_UPDATE = 7;
+  constexpr uint8_t POS_MODE = 8;
+  constexpr uint8_t POS_TEMPERATURE = 9;
+  constexpr uint8_t POS_PRESET = 10;
+  constexpr uint8_t POS_SWING = 12;
+  constexpr uint8_t POS_DISPLAY = 13;
+  constexpr uint8_t POS_CRC_WRITE = 46;
+  constexpr uint8_t POS_INDOOR_TEMPERATURE = 46;
+  constexpr uint8_t POS_PACKET_TYPE = 3;
+  
+  // Packet values
+  constexpr uint8_t PACKET_TYPE_STATE = 0x31;
+  constexpr uint8_t FORCE_UPDATE_VALUE = 175;
+  constexpr uint8_t DISPLAY_SHOW_TEMP = 0x20;
+  constexpr uint8_t PRESET_COOL_NORMAL = 6;
+  constexpr uint8_t PRESET_COOL_BOOST = 7;
+  constexpr uint8_t PRESET_HEAT_NORMAL = 14;
+  constexpr uint8_t PRESET_HEAT_BOOST = 15;
+}
 
 union gree_start_bytes_t {
 //     uint16_t u16;
@@ -91,9 +115,9 @@ class GreeClimate : public climate::Climate, public uart::UARTDevice, public Pol
   void dump_config() override;
   void control(const climate::ClimateCall &call) override;
   void set_supported_presets(const std::set<climate::ClimatePreset> &presets) { this->supported_presets_ = presets; }
-  // void set_supported_swing_modes(const std::set<climate::ClimateSwingMode> &modes) {
-  //   this->supported_swing_modes_ = modes;
-  // }
+  void set_supported_swing_modes(const std::set<climate::ClimateSwingMode> &modes) {
+    this->supported_swing_modes_ = modes;
+  }
 
  protected:
   climate::ClimateTraits traits() override;
@@ -113,9 +137,17 @@ class GreeClimate : public climate::Climate, public uart::UARTDevice, public Pol
   uint8_t data_read_[GREE_RX_BUFFER_SIZE] = {0};
 
   bool receiving_packet_ = false;
+  uint32_t last_packet_byte_time_ = 0;
+
+  // Statistics for diagnostics
+  uint32_t packets_received_ = 0;
+  uint32_t packets_sent_ = 0;
+  uint32_t checksum_errors_ = 0;
+  uint32_t timeout_errors_ = 0;
+  uint32_t invalid_packet_errors_ = 0;
 
   std::set<climate::ClimatePreset> supported_presets_{};
-  // std::set<climate::ClimateSwingMode> supported_swing_modes_{};
+  std::set<climate::ClimateSwingMode> supported_swing_modes_{};
 };
 
 }  // namespace gree

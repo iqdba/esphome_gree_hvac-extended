@@ -1,0 +1,70 @@
+esphome:
+  name: esp32-gree-ac
+  friendly_name: ESP32 GREE AC Controller
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "ESP32-GREE-AC Fallback Hotspot"
+    password: !secret ap_password
+
+# Enable logging
+logger:
+  level: INFO
+  # For debugging, use:
+  # level: VERBOSE
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# Enable web server for diagnostics
+web_server:
+  port: 80
+
+# UART configuration for GREE AC
+uart:
+  tx_pin: GPIO17  # Change to your TX pin
+  rx_pin: GPIO16  # Change to your RX pin
+  baud_rate: 4800
+  data_bits: 8
+  parity: EVEN
+  stop_bits: 1
+
+# External component
+external_components:
+  - source: github://bekmansurov/esphome_gree_hvac
+    components: [ gree ]
+    refresh: 0s
+
+# GREE Climate component
+climate:
+  - platform: gree
+    name: "Living Room AC"
+    # Optional: specify supported presets
+    supported_presets:
+      - NONE
+      - BOOST
+    # Optional: specify supported swing modes
+    supported_swing_modes:
+      - OFF
+      - VERTICAL
+      - HORIZONTAL
+      - BOTH
+    # Optional: change update interval (default: 10s)
+    update_interval: 10s
+
+# Optional: Add sensors for monitoring (if you want to expose statistics)
+# Note: Statistics counters are currently internal only
+# You can add them as sensors if needed in future versions
+

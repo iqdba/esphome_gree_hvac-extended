@@ -44,3 +44,9 @@ climate:
     name: None
     # None only if you set "friendly_name" in substitutions
     # name: "Kitchen AC"
+    # Optional: specify supported swing modes
+    # supported_swing_modes:
+    #   - OFF
+    #   - VERTICAL
+    #   - HORIZONTAL
+    #   - BOTH

@@ -6,11 +6,11 @@ from esphome.components import climate, uart
 from esphome.const import (
     CONF_ID,
     CONF_SUPPORTED_PRESETS,
-    # CONF_SUPPORTED_SWING_MODES,
+    CONF_SUPPORTED_SWING_MODES,
 )
 from esphome.components.climate import (
     ClimatePreset,
-    # ClimateSwingMode,
+    ClimateSwingMode,
 )
 
 CODEOWNERS = ["@bekmansurov"]
@@ -21,12 +21,13 @@ GreeClimate = gree_ns.class_(
     "GreeClimate", climate.Climate, cg.PollingComponent, uart.UARTDevice
 )
 
-# ALLOWED_CLIMATE_SWING_MODES = {
-#     "BOTH": ClimateSwingMode.CLIMATE_SWING_BOTH,
-#     "VERTICAL": ClimateSwingMode.CLIMATE_SWING_VERTICAL,
-#     "HORIZONTAL": ClimateSwingMode.CLIMATE_SWING_HORIZONTAL,
-# }
-# validate_swing_modes = cv.enum(ALLOWED_CLIMATE_SWING_MODES, upper=True)
+ALLOWED_CLIMATE_SWING_MODES = {
+    "OFF": ClimateSwingMode.CLIMATE_SWING_OFF,
+    "BOTH": ClimateSwingMode.CLIMATE_SWING_BOTH,
+    "VERTICAL": ClimateSwingMode.CLIMATE_SWING_VERTICAL,
+    "HORIZONTAL": ClimateSwingMode.CLIMATE_SWING_HORIZONTAL,
+}
+validate_swing_modes = cv.enum(ALLOWED_CLIMATE_SWING_MODES, upper=True)
 
 ALLOWED_CLIMATE_PRESETS = {
     "NONE": ClimatePreset.CLIMATE_PRESET_NONE,
@@ -36,13 +37,13 @@ ALLOWED_CLIMATE_PRESETS = {
 validate_presets = cv.enum(ALLOWED_CLIMATE_PRESETS, upper=True)
 
 CONFIG_SCHEMA = cv.All(
-    climate.CLIMATE_SCHEMA.extend(
+    climate.climate_schema(GreeClimate)
+    .extend(
         {
-            cv.GenerateID(): cv.declare_id(GreeClimate),
             cv.Optional(CONF_SUPPORTED_PRESETS): cv.ensure_list(validate_presets),
-            # cv.Optional(CONF_SUPPORTED_SWING_MODES): cv.ensure_list(
-                # validate_swing_modes
-            # ),
+            cv.Optional(CONF_SUPPORTED_SWING_MODES): cv.ensure_list(
+                validate_swing_modes
+            ),
         }
     )
     # wifi module polls every 300ms but do we need it so often? set it to 10s
@@ -55,7 +56,7 @@ async def to_code(config):
     await cg.register_component(var, config)
     await climate.register_climate(var, config)
     await uart.register_uart_device(var, config)
-    # if CONF_SUPPORTED_SWING_MODES in config:
-    # cg.add(var.set_supported_swing_modes(config[CONF_SUPPORTED_SWING_MODES]))
+    if CONF_SUPPORTED_SWING_MODES in config:
+        cg.add(var.set_supported_swing_modes(config[CONF_SUPPORTED_SWING_MODES]))
     if CONF_SUPPORTED_PRESETS in config:
         cg.add(var.set_supported_presets(config[CONF_SUPPORTED_PRESETS]))
