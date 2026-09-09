@@ -19,9 +19,16 @@ Upstream exposed climate mode, target temperature, fan speed, and a boost preset
 - **Turbo** — `switch` entity (a standalone toggle, independent of the climate preset)
 - **Louver / swing position** — `select` entity with the 10 positions the unit actually supports: `Off`, `Full Swing`, `Top`, `Upper`, `Middle`, `Lower`, `Bottom`, `Lower Swing`, `Middle Swing`, `Upper Swing`
 
-## Quick start
+## Quick start — fastest way to flash a unit
 
-Point `external_components` at this repository — ESPHome pulls the component straight from GitHub, no manual download or `git clone` needed. Add this block (and the `climate:` section below it) to any working ESP32/ESP8266 YAML that already has `wifi:`, `api:`, `ota:`, and a `uart:` wired to the AC's control board:
+1. Download one file: [`examples/d1-mini.yaml`](examples/d1-mini.yaml). It's for a cheap, common ESP8266 board (Wemos D1 Mini) wired directly to the AC's UART — no other hardware package or extra file needed.
+2. Open it and edit the `CHANGE_ME_...` values near the top (`substitutions:` block): your WiFi SSID/password, your MQTT broker/username/password, and the OTA/fallback-hotspot passwords. That block is the only thing you need to touch.
+3. Set `location:` to whatever you want this unit called (it drives the device name and MQTT topic).
+4. Flash it: `esphome run d1-mini.yaml`.
+
+ESPHome fetches this component straight from GitHub on the first compile via the `external_components:` block already in the file — no manual download or `git clone` of the component itself. Climate (mode, temperature, fan) plus the sleep/display/turbo switches and the louver select all come up ready to use in Home Assistant (via MQTT discovery) immediately after flashing.
+
+To add this component to your own existing YAML instead, just copy its `external_components:` block:
 
 ```yaml
 external_components:
@@ -50,14 +57,7 @@ climate:
       name: "AC Louver"
 ```
 
-Run `esphome run <your-config>.yaml` — ESPHome fetches this component automatically on the first compile, and every entity above (climate + 3 switches + 1 select) shows up ready to use, no extra wiring in the YAML required.
-
-For a complete, ready-to-flash device config, see:
-
-- [`examples/d1-mini.yaml`](examples/d1-mini.yaml) — a cheap, common Wemos D1 Mini (ESP8266) wired directly to the AC's UART, with logging of the AC's own state. No extra hardware package needed.
-- [`examples/iot-uni-dongle.yaml`](examples/iot-uni-dongle.yaml) — for the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) board.
-
-Both need a `secrets.yaml` next to them — copy [`examples/secrets.yaml.example`](examples/secrets.yaml.example) to `examples/secrets.yaml` and fill in your own WiFi/OTA/AP values (never commit `secrets.yaml` — it's already in `.gitignore`).
+For the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) board instead of a plain D1 Mini, see [`examples/iot-uni-dongle.yaml`](examples/iot-uni-dongle.yaml) — that one keeps the original `!secret`-based style, so copy [`examples/secrets.yaml.example`](examples/secrets.yaml.example) to `examples/secrets.yaml` next to it and fill in your values there instead (never commit `secrets.yaml` — it's already in `.gitignore`).
 
 ## Why this fork exists
 
