@@ -169,6 +169,10 @@ Then install the official **[Home Assistant](https://apps.apple.com/us/app/home-
 
 Built while bridging a set of Gree units into Apple HomeKit. The upstream component didn't expose display/sleep/turbo/louver control, so those were added here to reach full parity with the physical remote.
 
+## Acknowledgments
+
+None of this would exist without [@bekmansurov](https://github.com/bekmansurov)'s original [esphome_gree_hvac](https://github.com/bekmansurov/esphome_gree_hvac). Reverse-engineering the Gree UART protocol from scratch and getting basic climate control working is the hard part — everything in this fork (sleep, display, turbo, exact louver position, the examples, the docs) is built directly on top of that foundation. Thank you for doing the groundwork and sharing it.
+
 ## Upstream
 
 See the [original repository](https://github.com/bekmansurov/esphome_gree_hvac) for the base protocol implementation and additional supported unit reports.
