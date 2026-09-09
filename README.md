@@ -4,6 +4,8 @@ Extended fork of [bekmansurov/esphome_gree_hvac](https://github.com/bekmansurov/
 
 All credit for the original protocol reverse-engineering and base component goes to [@bekmansurov](https://github.com/bekmansurov). This fork adds control of AC features the upstream component didn't expose yet.
 
+**Pointing an AI agent (Claude, ChatGPT, etc.) at this repo?** Have it read [`AGENTS.md`](AGENTS.md) first — it's written specifically to get an agent oriented fast and flag what not to improvise on.
+
 ## Disclaimer
 
 This project is shared for educational/informational purposes, as-is, with no warranty of any kind. It is not affiliated with, endorsed by, or supported by Zhuhai Gree Group Co., Ltd. or any AC manufacturer. Using it means opening your AC, modifying its wiring, and running third-party firmware against a proprietary protocol that was reverse-engineered, not documented by the manufacturer.
