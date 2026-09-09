@@ -66,6 +66,8 @@ Upstream exposed climate mode, target temperature, fan speed, and a boost preset
 - **Turbo** — `switch` entity (a standalone toggle, independent of the climate preset)
 - **Louver / swing position** — `select` entity with the 10 positions the unit actually supports: `Off`, `Full Swing`, `Top`, `Upper`, `Middle`, `Lower`, `Bottom`, `Lower Swing`, `Middle Swing`, `Upper Swing`
 
+The exact byte values for these (especially the 10 louver positions) weren't documented anywhere — they were reverse-engineered by capturing the AC's own UART traffic while operating it from its physical remote, then matching the bytes to what the remote was actually telling it to do.
+
 ## Quick start — fastest way to flash a unit
 
 1. Download one file: [`examples/d1-mini.yaml`](examples/d1-mini.yaml). It's for a cheap, common ESP8266 board (Wemos D1 Mini) wired directly to the AC's UART — no other hardware package or extra file needed.
