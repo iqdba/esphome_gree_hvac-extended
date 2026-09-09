@@ -145,13 +145,19 @@ For the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) bo
 
 ## Control from your phone (IoT MQTT Panel)
 
-You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/us/app/iot-mqtt-panel/id6466780124)** is a free iPhone app (English UI) — not the paid "Pro" version that connects straight to your MQTT broker — the same one you already configured in the YAML — and lets you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
+You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/us/app/iot-mqtt-panel/id6466780124)** (the free one, not the paid "Pro" version) is an iPhone app with an English UI that connects straight to your MQTT broker — the same one you already configured in the YAML — and lets you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
 
 The topic path isn't fixed — it's whatever you set `tp:` to in the YAML (`home/ac/<location>` by default). When you add each widget's topic in the app, use that same prefix followed by the paths in [`MQTT_TOPICS.md`](MQTT_TOPICS.md) — e.g. with the defaults, the office unit's target temperature is `home/ac/office/climate/gree_ac/target_temperature/command`.
 
 Example, one widget per room:
 
 ![IoT MQTT Panel example with three AC widgets](docs/iot-mqtt-panel-example.jpg)
+
+## Home Assistant (optional, for a fuller smart-home setup)
+
+If you want automations, voice control, and a proper dashboard instead of hand-building one, run [Home Assistant](https://www.home-assistant.io/installation/) — on a Raspberry Pi, a mini PC, a VM, whatever you have. Point its MQTT integration at the same broker you set in the YAML; since the example already has `discovery: true` / `discovery_prefix: homeassistant`, every AC and its sleep/display/turbo/louver entities show up in Home Assistant automatically, no manual configuration needed.
+
+Then install the official **[Home Assistant](https://apps.apple.com/us/app/home-assistant/id1099568401)** app on your iPhone and log it into your Home Assistant server's address — that's a different app from IoT MQTT Panel above, made for a full smart-home setup rather than a single custom dashboard.
 
 ## Why this fork exists
 
