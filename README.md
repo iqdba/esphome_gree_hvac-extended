@@ -34,6 +34,8 @@ On the units this fork was tested on, that connector is a small 4-pin part (mark
 
 A matching 4-pin `CHU4` housing plus crimp pins is a standard, widely stocked connector part — sold individually at most electronics component suppliers if you need to make your own cable instead of splicing into the existing one.
 
+This cable isn't sold ready-made — you build it yourself: crimp or solder 4 short wires from the `CHU4` housing to the D1 Mini's `5V`/`G`/`RX`/`TX` pins per the table above, and only flash the firmware (see **Flashing** below) once that cable is done and plugged in.
+
 ## What you need
 
 - An ESP8266 or ESP32 board — [`examples/d1-mini.yaml`](examples/d1-mini.yaml) targets a cheap Wemos D1 Mini (ESP8266).
