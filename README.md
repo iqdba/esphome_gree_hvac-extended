@@ -7,6 +7,8 @@ All credit for the original protocol reverse-engineering and base component goes
 The component is tested on the following units:
 - Kentatsu Turin (KSGU26HZAN1/KSRU26HZAN1, KSGU35HZAN1/KSRU35HZAN1)
 - Lessar Enigma (LS-HE12KDE2/LU-HE12KDE2)
+- Gree GWH12QB
+- Gree GWH18QD
 
 ## What's new in this fork
 
