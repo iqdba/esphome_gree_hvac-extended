@@ -4,6 +4,12 @@ Extended fork of [bekmansurov/esphome_gree_hvac](https://github.com/bekmansurov/
 
 All credit for the original protocol reverse-engineering and base component goes to [@bekmansurov](https://github.com/bekmansurov). This fork adds control of AC features the upstream component didn't expose yet.
 
+## Disclaimer
+
+This project is shared for educational/informational purposes, as-is, with no warranty of any kind. It is not affiliated with, endorsed by, or supported by Zhuhai Gree Group Co., Ltd. or any AC manufacturer. Using it means opening your AC, modifying its wiring, and running third-party firmware against a proprietary protocol that was reverse-engineered, not documented by the manufacturer.
+
+**You use this entirely at your own risk.** The author(s) and contributors of this repository accept no responsibility or liability for any damage to your AC, your electrical system, your property, or any injury that results from following this guide or using this software. If that's not acceptable to you, don't use this project — call a professional instead.
+
 ## ⚠️ Safety first
 
 This wires an ESP board directly into your AC's internal control board, inside the same enclosure as the unit's mains wiring (220/110V). Before opening any AC panel:
@@ -153,3 +159,7 @@ Built while bridging a set of Gree units into Apple HomeKit. The upstream compon
 ## Upstream
 
 See the [original repository](https://github.com/bekmansurov/esphome_gree_hvac) for the base protocol implementation and additional supported unit reports.
+
+## License
+
+[MIT](LICENSE) — provided as-is, no warranty. See the **Disclaimer** section above.
