@@ -143,9 +143,15 @@ For the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) bo
 - **Board keeps rebooting into the fallback hotspot** — usually a genuinely wrong WiFi password/SSID; connect to the hotspot and re-enter them via the captive portal instead of re-flashing.
 - **Don't publish your own edited copy of `d1-mini.yaml`** — once you've filled in real WiFi/MQTT values it contains your credentials. Keep your working copy private; if you want to share fixes, edit a fresh copy with the `CHANGE_ME_...` placeholders still in place.
 
+## Don't have an MQTT server? You don't strictly need one
+
+You don't need a Raspberry Pi, Home Assistant, or any server of your own just to try this out. **[EMQX](https://www.emqx.com/en/mqtt/public-mqtt5-broker)** runs a free public test broker at `broker.emqx.io` (port `1883`, no username/password) — put that straight into `mqtt_broker:` in the YAML — it doesn't check `mqtt_username`/`mqtt_password` at all, so any values there work — and the AC is controllable within minutes.
+
+**But it's public.** EMQX's own docs are explicit that this broker is for learning/testing only: every message on it is visible to anyone else using it, there's no privacy, and there's no guarantee of uptime. Someone who guesses or finds your exact `tp:` topic prefix could see your AC's state or send it commands. Fine for a first test to confirm everything works end to end; for actual daily use, either run your own broker (e.g. the free Mosquitto broker add-on built into Home Assistant, see below) or use an EMQX Cloud/other broker with a real username and password.
+
 ## Control from your phone (IoT MQTT Panel)
 
-You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/us/app/iot-mqtt-panel/id6466780124)** (the free one, not the paid "Pro" version) is an iPhone app with an English UI that connects straight to your MQTT broker — the same one you already configured in the YAML — and lets you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
+You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/us/app/iot-mqtt-panel/id6466780124)** for iPhone (the free one, not the paid "Pro" version) or **[IoT MQTT Panel](https://play.google.com/store/apps/details?id=snr.lab.iotmqttpanel.prod)** for Android — same developer, same free/Pro split, both with an English UI — connect straight to your MQTT broker (whichever one you picked above) and let you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
 
 The topic path isn't fixed — it's whatever you set `tp:` to in the YAML (`home/ac/<location>` by default). When you add each widget's topic in the app, use that same prefix followed by the paths in [`MQTT_TOPICS.md`](MQTT_TOPICS.md) — e.g. with the defaults, the office unit's target temperature is `home/ac/office/climate/gree_ac/target_temperature/command`.
 
