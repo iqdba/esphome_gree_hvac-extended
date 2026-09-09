@@ -46,7 +46,7 @@ This cable isn't sold ready-made — you build it yourself: crimp or solder 4 sh
 
 ## What you need
 
-- An ESP8266 or ESP32 board — [`examples/d1-mini.yaml`](examples/d1-mini.yaml) targets a cheap Wemos D1 Mini (ESP8266).
+- An ESP8266 or ESP32 board — [`examples/d1-mini.yaml`](examples/d1-mini.yaml) targets a cheap Wemos D1 Mini (ESP8266). The `gree` component itself also runs fine on ESP32; swap the YAML's `esp8266:`/`board: d1_mini` block for the matching `esp32:` block and your board's own pin names for the `uart:` section.
 - A USB data cable (not charge-only) to flash it the first time.
 - Possibly a separate USB-to-UART adapter, if your board has no onboard USB port or if its built-in USB chip gives you driver trouble (common with cheap CH340 clones). An **FTDI FT232**-based adapter is a reliable choice with fewer driver headaches across Windows/Mac/Linux.
 - [ESPHome](https://esphome.io/guides/installing_esphome) installed on a computer: `pip install esphome` (needs Python 3), or the ESPHome add-on inside Home Assistant.
