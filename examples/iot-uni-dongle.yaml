@@ -12,7 +12,7 @@ packages:
   default: github://dudanov/esphome-packages/hardware/iot-uni-dongle/device.yaml
 
 external_components:
-  - source: github://bekmansurov/esphome_gree_hvac
+  - source: github://iqdba/esphome_gree_hvac-extended
     components: [ gree ]
     refresh: 0s
 
@@ -44,3 +44,11 @@ climate:
     name: None
     # None only if you set "friendly_name" in substitutions
     # name: "Kitchen AC"
+    sleep:
+      name: "${friendly_name} Sleep"
+    display:
+      name: "${friendly_name} Display"
+    turbo:
+      name: "${friendly_name} Turbo"
+    louver:
+      name: "${friendly_name} Louver"

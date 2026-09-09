@@ -19,12 +19,27 @@ Upstream exposed climate mode, target temperature, fan speed, and a boost preset
 - **Turbo** — `switch` entity (a standalone toggle, independent of the climate preset)
 - **Louver / swing position** — `select` entity with the 10 positions the unit actually supports: `Off`, `Full Swing`, `Top`, `Upper`, `Middle`, `Lower`, `Bottom`, `Lower Swing`, `Middle Swing`, `Upper Swing`
 
-## Example
+## Quick start
+
+Point `external_components` at this repository — ESPHome pulls the component straight from GitHub, no manual download or `git clone` needed. Add this block (and the `climate:` section below it) to any working ESP32/ESP8266 YAML that already has `wifi:`, `api:`, `ota:`, and a `uart:` wired to the AC's control board:
 
 ```yaml
+external_components:
+  - source: github://iqdba/esphome_gree_hvac-extended
+    components: [ gree ]
+    refresh: 0s
+
+uart:
+  tx_pin: 1
+  rx_pin: 3
+  baud_rate: 4800
+  data_bits: 8
+  parity: EVEN
+  stop_bits: 1
+
 climate:
   - platform: gree
-    name: None
+    name: "AC"
     sleep:
       name: "AC Sleep"
     display:
@@ -35,7 +50,9 @@ climate:
       name: "AC Louver"
 ```
 
-See `examples/iot-uni-dongle.yaml` for a full device config.
+Run `esphome run <your-config>.yaml` — ESPHome fetches this component automatically on the first compile, and every entity above (climate + 3 switches + 1 select) shows up ready to use, no extra wiring in the YAML required.
+
+For a complete, ready-to-flash device config (WiFi, board package, UART pins, all entities included), see [`examples/iot-uni-dongle.yaml`](examples/iot-uni-dongle.yaml) — copy it, fill in your WiFi `!secret`s, and flash.
 
 ## Why this fork exists
 
