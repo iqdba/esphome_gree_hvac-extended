@@ -136,6 +136,16 @@ For the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) bo
 - **Board keeps rebooting into the fallback hotspot** — usually a genuinely wrong WiFi password/SSID; connect to the hotspot and re-enter them via the captive portal instead of re-flashing.
 - **Don't publish your own edited copy of `d1-mini.yaml`** — once you've filled in real WiFi/MQTT values it contains your credentials. Keep your working copy private; if you want to share fixes, edit a fresh copy with the `CHANGE_ME_...` placeholders still in place.
 
+## Control from your phone (IoT MQTT Panel)
+
+You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/app/iot-mqtt-panel/id1533052132)** is a free iPhone app (English UI) that connects straight to your MQTT broker — the same one you already configured in the YAML — and lets you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
+
+The topic path isn't fixed — it's whatever you set `tp:` to in the YAML (`home/ac/<location>` by default). When you add each widget's topic in the app, use that same prefix followed by the paths in [`MQTT_TOPICS.md`](MQTT_TOPICS.md) — e.g. with the defaults, the office unit's target temperature is `home/ac/office/climate/gree_ac/target_temperature/command`.
+
+Example, one widget per room:
+
+![IoT MQTT Panel example with three AC widgets](docs/iot-mqtt-panel-example.jpg)
+
 ## Why this fork exists
 
 Built while bridging a set of Gree units into Apple HomeKit. The upstream component didn't expose display/sleep/turbo/louver control, so those were added here to reach full parity with the physical remote.
