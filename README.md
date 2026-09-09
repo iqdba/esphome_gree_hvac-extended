@@ -68,6 +68,8 @@ Upstream exposed climate mode, target temperature, fan speed, and a boost preset
 
 The exact byte values for these (especially the 10 louver positions) weren't documented anywhere — they were reverse-engineered by capturing the AC's own UART traffic while operating it from its physical remote, then matching the bytes to what the remote was actually telling it to do.
 
+The full result of that reverse-engineering — every byte offset, every field encoding, checksum algorithm, and the genuine unknowns — is written up on its own, independent of this component's code, in [`PROTOCOL.md`](PROTOCOL.md). Use it if you want to implement a client in another language instead of reusing this one.
+
 ## Quick start — fastest way to flash a unit
 
 1. Download one file: [`examples/d1-mini.yaml`](examples/d1-mini.yaml). It's for a cheap, common ESP8266 board (Wemos D1 Mini) wired directly to the AC's UART — no other hardware package or extra file needed.
