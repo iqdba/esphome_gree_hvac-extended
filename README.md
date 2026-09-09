@@ -24,9 +24,35 @@ Upstream exposed climate mode, target temperature, fan speed, and a boost preset
 1. Download one file: [`examples/d1-mini.yaml`](examples/d1-mini.yaml). It's for a cheap, common ESP8266 board (Wemos D1 Mini) wired directly to the AC's UART — no other hardware package or extra file needed.
 2. Open it and edit the `CHANGE_ME_...` values near the top (`substitutions:` block): your WiFi SSID/password, your MQTT broker/username/password, and the OTA/fallback-hotspot passwords. That block is the only thing you need to touch.
 3. Set `location:` to whatever you want this unit called (it drives the device name and MQTT topic).
-4. Flash it: `esphome run d1-mini.yaml`.
+4. Flash it — see **Flashing** below.
 
 ESPHome fetches this component straight from GitHub on the first compile via the `external_components:` block already in the file — no manual download or `git clone` of the component itself. Climate (mode, temperature, fan) plus the sleep/display/turbo switches and the louver select all come up ready to use in Home Assistant (via MQTT discovery) immediately after flashing.
+
+## Flashing
+
+Needs [ESPHome](https://esphome.io/guides/installing_esphome) installed (`pip install esphome`, or use the ESPHome add-on in Home Assistant instead of the commands below).
+
+**First flash — over USB, one time only.** Plug the board into your computer, then:
+
+```sh
+esphome run d1-mini.yaml
+```
+
+ESPHome will ask you to pick a serial port — choose the one for your board (something like `/dev/cu.usbserial-XXXX` on Mac, `/dev/ttyUSB0` on Linux, `COM3` on Windows).
+
+**Every update after that — over WiFi (OTA), no cable needed:**
+
+```sh
+esphome run d1-mini.yaml --device gree_ac_office.local
+```
+
+Replace `gree_ac_office` with `gree_ac_<location>`, using whatever you set `location:` to. If you don't pass `--device`, `esphome run` looks for a USB-connected board first and falls back to OTA over the network if it doesn't find one.
+
+**Just want to watch the logs**, without reflashing:
+
+```sh
+esphome logs d1-mini.yaml
+```
 
 To add this component to your own existing YAML instead, just copy its `external_components:` block:
 
