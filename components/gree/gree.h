@@ -2,13 +2,13 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/climate/climate.h"
+#include "esphome/components/select/select.h"
+#include "esphome/components/switch/switch.h"
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
 namespace gree {
-
-// enum SwingMode : uint8_t { SWING_OFF = 0, SWING_VERTICAL = 1, SWING_HORIZONTAL = 2, SWING_BOTH = 3 };
 
 enum ac_mode: uint8_t {
   AC_MODE_OFF = 0x10,
@@ -31,16 +31,8 @@ enum ac_fan: uint8_t {
   AC_FAN_HIGH = 0x03
 };
 
-// not implemented yet
-enum ac_swing: uint8_t {
-  AC_SWING_OFF = 0x44,
-  AC_SWING_VERTICAL = 0x14,
-  AC_SWING_HORIZONTAL = 0x41,
-  AC_SWING_BOTH = 0x11
-};
-
-// not implemented yet
-enum ac_louver_H: uint8_t {
+// Observed on gree_ac_office using the physical remote.
+enum ac_louver: uint8_t {
   AC_LOUVERH_OFF = 0x00,
   AC_LOUVERH_SWING_FULL = 0x10,
   AC_LOUVERH_SWING_TOP = 0x20,
@@ -83,17 +75,27 @@ class Constants {
 const uint32_t Constants::AC_STATE_REQUEST_INTERVAL = 300;
 */
 
+class GreeFeatureSwitch;
+class GreeLouverSelect;
+
 class GreeClimate : public climate::Climate, public uart::UARTDevice, public PollingComponent {
  public:
-  // void setup() override;
+  void setup() override;
   void loop() override;
   void update() override;
   void dump_config() override;
   void control(const climate::ClimateCall &call) override;
   void set_supported_presets(const std::set<climate::ClimatePreset> &presets) { this->supported_presets_ = presets; }
-  // void set_supported_swing_modes(const std::set<climate::ClimateSwingMode> &modes) {
-  //   this->supported_swing_modes_ = modes;
-  // }
+
+  void set_sleep_switch(GreeFeatureSwitch *sw) { this->sleep_switch_ = sw; }
+  void set_display_switch(GreeFeatureSwitch *sw) { this->display_switch_ = sw; }
+  void set_turbo_switch(GreeFeatureSwitch *sw) { this->turbo_switch_ = sw; }
+  void set_louver_select(GreeLouverSelect *sel) { this->louver_select_ = sel; }
+
+  void set_sleep(bool on);
+  void set_display(bool on);
+  void set_turbo(bool on);
+  void set_louver(const std::string &value);
 
  protected:
   climate::ClimateTraits traits() override;
@@ -101,6 +103,8 @@ class GreeClimate : public climate::Climate, public uart::UARTDevice, public Pol
   void send_data_(const uint8_t *message, uint8_t size);
   void dump_message_(const char *title, const uint8_t *message, uint8_t size);
   uint8_t get_checksum_(const uint8_t *message, size_t size);
+  void send_updated_state_();
+  const char *louver_name_(uint8_t raw) const;
 
  private:
   // uint32_t _update_period = Constants::AC_STATE_REQUEST_INTERVAL;
@@ -115,7 +119,41 @@ class GreeClimate : public climate::Climate, public uart::UARTDevice, public Pol
   bool receiving_packet_ = false;
 
   std::set<climate::ClimatePreset> supported_presets_{};
-  // std::set<climate::ClimateSwingMode> supported_swing_modes_{};
+  GreeFeatureSwitch *sleep_switch_{nullptr};
+  GreeFeatureSwitch *display_switch_{nullptr};
+  GreeFeatureSwitch *turbo_switch_{nullptr};
+  GreeLouverSelect *louver_select_{nullptr};
+
+  bool sleep_{false};
+  bool display_{true};
+  bool turbo_{false};
+  uint8_t louver_{AC_LOUVERH_OFF};
+};
+
+enum GreeFeature : uint8_t { SLEEP, DISPLAY_LIGHT, TURBO };
+
+class GreeFeatureSwitch : public switch_::Switch, public Component {
+ public:
+  void set_parent(GreeClimate *parent) { this->parent_ = parent; }
+  void set_feature(GreeFeature feature) { this->feature_ = feature; }
+
+ protected:
+  void write_state(bool state) override;
+
+ private:
+  GreeClimate *parent_{nullptr};
+  GreeFeature feature_{GreeFeature::SLEEP};
+};
+
+class GreeLouverSelect : public select::Select, public Component {
+ public:
+  void set_parent(GreeClimate *parent) { this->parent_ = parent; }
+
+ protected:
+  void control(const std::string &value) override;
+
+ private:
+  GreeClimate *parent_{nullptr};
 };
 
 }  // namespace gree

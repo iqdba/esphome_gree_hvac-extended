@@ -14,7 +14,11 @@ static const char *const TAG = "gree";
 static const uint8_t FORCE_UPDATE = 7;
 static const uint8_t MODE = 8;
 static const uint8_t MODE_MASK = 0b11110000;
-static const uint8_t FAN_MASK = 0b00001111;
+static const uint8_t FAN_MASK = 0b00000011;
+static const uint8_t SLEEP_BIT = 0b00001000;
+static const uint8_t FLAGS10 = 10;
+static const uint8_t TURBO_BIT = 0b00000001;
+static const uint8_t DISPLAY_BIT = 0b00000010;
 static const uint8_t SWING = 12;
 
 static const uint8_t CRC_WRITE = 46;
@@ -28,6 +32,12 @@ static const uint8_t INDOOR_TEMPERATURE = 46;
 static const uint8_t MIN_VALID_TEMPERATURE = 16;
 static const uint8_t MAX_VALID_TEMPERATURE = 30;
 static const uint8_t TEMPERATURE_STEP = 1;
+
+static const char *const LOUVER_OPTIONS[] = {
+    "Off", "Full Swing", "Top", "Upper", "Middle", "Lower", "Bottom",
+    "Lower Swing", "Middle Swing", "Upper Swing"};
+
+void GreeClimate::setup() {}
 
 // prints user configuration
 void GreeClimate::dump_config() {
@@ -105,7 +115,12 @@ climate::ClimateTraits GreeClimate::traits() {
       climate::CLIMATE_FAN_HIGH
   });
 
-  // traits.set_supported_swing_modes(this->supported_swing_modes_);
+  // ESPHome / HomeKit expose swing as a simple off / vertical toggle. Exact
+  // fixed positions and partial ranges are exposed by the Louver select.
+  traits.set_supported_swing_modes({
+      climate::CLIMATE_SWING_OFF,
+      climate::CLIMATE_SWING_VERTICAL,
+  });
   traits.set_supports_current_temperature(true);
   traits.set_supports_two_point_target_temperature(false);
 
@@ -113,7 +128,6 @@ climate::ClimateTraits GreeClimate::traits() {
 
   traits.add_supported_preset(climate::CLIMATE_PRESET_NONE);
   traits.add_supported_preset(climate::CLIMATE_PRESET_BOOST);
-  // traits.add_supported_preset(climate::CLIMATE_PRESET_SLEEP);
 
   return traits;
 }
@@ -138,10 +152,18 @@ void GreeClimate::read_state_(const uint8_t *data, uint8_t size) {
   this->target_temperature = data[TEMPERATURE] / 16 + MIN_VALID_TEMPERATURE;
   this->current_temperature = data[INDOOR_TEMPERATURE] - 40; // check later?
 
-  // partially saving current state to previous request
+  // Preserve every field that we can control. This is essential when the
+  // physical remote changes a feature: the next API command must not restore
+  // a stale byte from before that remote press.
   data_write_[MODE] = data[MODE];
-  // add target temperature state too? ok
   data_write_[TEMPERATURE] = data[TEMPERATURE];
+  data_write_[FLAGS10] = data[FLAGS10];
+  data_write_[SWING] = data[SWING];
+
+  this->sleep_ = (data[MODE] & SLEEP_BIT) != 0;
+  this->display_ = (data[FLAGS10] & DISPLAY_BIT) != 0;
+  this->turbo_ = (data[FLAGS10] & TURBO_BIT) != 0;
+  this->louver_ = data[SWING];
 
   // update CLIMATE state according AC response
   switch (data[MODE] & MODE_MASK) {
@@ -185,39 +207,28 @@ void GreeClimate::read_state_(const uint8_t *data, uint8_t size) {
       ESP_LOGW(TAG, "Unknown AC mode&FAN: %s", data[MODE]);
   }
 
-  /*
   switch (data[SWING]) {
-    case AC_SWING_OFF:
-      this->swing_mode = climate::CLIMATE_SWING_OFF;
-      break;
-
-    case AC_SWING_VERTICAL:
+    case AC_LOUVERH_SWING_FULL:
+    case AC_LOUVERH_SWING_MIDDLE_TO_BOTTOM:
+    case AC_LOUVERH_SWING_ABOVEMIDDLE_TO_BELOWMIDDLE:
+    case AC_LOUVERH_SWING_MIDDLE_TO_TOP:
       this->swing_mode = climate::CLIMATE_SWING_VERTICAL;
       break;
-
-    case AC_SWING_HORIZONTAL:
-      this->swing_mode = climate::CLIMATE_SWING_HORIZONTAL;
-      break;
-
-    case AC_SWING_BOTH:
-      this->swing_mode = climate::CLIMATE_SWING_BOTH;
-      break;
-  }
-  */
-
-  switch (data[10]) {
-    case 7:
-      // when COOL TURBO
-      this->preset = climate::CLIMATE_PRESET_BOOST;
-      break;
-    case 15:
-      // when HEAT TURBO
-      this->preset = climate::CLIMATE_PRESET_BOOST;
-      break;
     default:
-      this->preset = climate::CLIMATE_PRESET_NONE;
+      this->swing_mode = climate::CLIMATE_SWING_OFF;
       break;
   }
+
+  this->preset = this->turbo_ ? climate::CLIMATE_PRESET_BOOST : climate::CLIMATE_PRESET_NONE;
+
+  if (this->sleep_switch_ != nullptr)
+    this->sleep_switch_->publish_state(this->sleep_);
+  if (this->display_switch_ != nullptr)
+    this->display_switch_->publish_state(this->display_);
+  if (this->turbo_switch_ != nullptr)
+    this->turbo_switch_->publish_state(this->turbo_);
+  if (this->louver_select_ != nullptr)
+    this->louver_select_->publish_state(this->louver_name_(this->louver_));
 
   this->publish_state();
 }
@@ -240,11 +251,13 @@ void GreeClimate::control(const climate::ClimateCall &call) {
   // saving mode&fan values from previous 
   uint8_t new_mode = data_write_[MODE] & MODE_MASK;
   uint8_t new_fan_speed = data_write_[MODE] & FAN_MASK;
+  uint8_t sleep_bit = data_write_[MODE] & SLEEP_BIT;
 
   if (call.get_mode().has_value()) {
     switch (call.get_mode().value()) {
       case climate::CLIMATE_MODE_OFF:
         new_mode = AC_MODE_OFF;
+        sleep_bit = 0;
         break;
       case climate::CLIMATE_MODE_AUTO:
         new_mode = AC_MODE_AUTO;
@@ -298,25 +311,12 @@ void GreeClimate::control(const climate::ClimateCall &call) {
   if (call.get_preset().has_value()) {
     switch (call.get_preset().value()) {
       case climate::CLIMATE_PRESET_NONE:
-        if (new_mode == AC_MODE_COOL) {
-          data_write_[10] = 6;
-        } else if (new_mode == AC_MODE_HEAT) {
-          data_write_[10] = 14;
-        }
+        data_write_[FLAGS10] &= (uint8_t) ~TURBO_BIT;
         break;
       case climate::CLIMATE_PRESET_BOOST:
-        if (new_mode == AC_MODE_COOL) {
-          data_write_[10] = 7;
-        } else if (new_mode == AC_MODE_HEAT) {
-          data_write_[10] = 15;
-        }
-        // skip preset when not COOL or HEAT mode
-        break;
-      case climate::CLIMATE_PRESET_SLEEP:
-        // something
+        data_write_[FLAGS10] |= TURBO_BIT;
         break;
       default:
-        // something?
         break;
     }
   }
@@ -336,25 +336,20 @@ void GreeClimate::control(const climate::ClimateCall &call) {
       data_write_[TEMPERATURE] = (call.get_target_temperature().value() - MIN_VALID_TEMPERATURE) * 16;
   }
 
-  // temporary disabled
   if (call.get_swing_mode().has_value()) {
     switch (call.get_swing_mode().value()) {
       case climate::CLIMATE_SWING_OFF:
-        // data_[SWING] = SWING_OFF;
+        data_write_[SWING] = AC_LOUVERH_OFF;
         break;
       case climate::CLIMATE_SWING_VERTICAL:
-        // data_[SWING] = SWING_VERTICAL;
+        data_write_[SWING] = AC_LOUVERH_SWING_FULL;
         break;
-      case climate::CLIMATE_SWING_HORIZONTAL:
-        // data_[SWING] = SWING_HORIZONTAL;
-        break;
-      case climate::CLIMATE_SWING_BOTH:
-        // data_[SWING] = SWING_BOTH;
+      default:
         break;
     }
   }
 
-  data_write_[MODE] = new_mode + new_fan_speed;
+  data_write_[MODE] = (new_mode & MODE_MASK) | (new_fan_speed & FAN_MASK) | sleep_bit;
 
   // compute checksum & send data
   data_write_[CRC_WRITE] = get_checksum_(data_write_, sizeof(data_write_));
@@ -362,6 +357,79 @@ void GreeClimate::control(const climate::ClimateCall &call) {
 
   // change of force_update byte to "passive" state
   data_write_[FORCE_UPDATE] = 0;
+}
+
+void GreeClimate::send_updated_state_() {
+  data_write_[FORCE_UPDATE] = 175;
+  data_write_[CRC_WRITE] = get_checksum_(data_write_, sizeof(data_write_));
+  send_data_(data_write_, sizeof(data_write_));
+  data_write_[FORCE_UPDATE] = 0;
+}
+
+void GreeClimate::set_sleep(bool on) {
+  this->sleep_ = on;
+  if (on)
+    data_write_[MODE] |= SLEEP_BIT;
+  else
+    data_write_[MODE] &= (uint8_t) ~SLEEP_BIT;
+  send_updated_state_();
+  if (this->sleep_switch_ != nullptr)
+    this->sleep_switch_->publish_state(on);
+}
+
+void GreeClimate::set_display(bool on) {
+  this->display_ = on;
+  if (on)
+    data_write_[FLAGS10] |= DISPLAY_BIT;
+  else
+    data_write_[FLAGS10] &= (uint8_t) ~DISPLAY_BIT;
+  send_updated_state_();
+  if (this->display_switch_ != nullptr)
+    this->display_switch_->publish_state(on);
+}
+
+void GreeClimate::set_turbo(bool on) {
+  this->turbo_ = on;
+  if (on)
+    data_write_[FLAGS10] |= TURBO_BIT;
+  else
+    data_write_[FLAGS10] &= (uint8_t) ~TURBO_BIT;
+  send_updated_state_();
+  if (this->turbo_switch_ != nullptr)
+    this->turbo_switch_->publish_state(on);
+}
+
+const char *GreeClimate::louver_name_(uint8_t raw) const {
+  switch (raw) {
+    case AC_LOUVERH_SWING_FULL: return LOUVER_OPTIONS[1];
+    case AC_LOUVERH_SWING_TOP: return LOUVER_OPTIONS[2];
+    case AC_LOUVERH_SWING_ABOVEMIDDLE: return LOUVER_OPTIONS[3];
+    case AC_LOUVERH_SWING_MIDDLE: return LOUVER_OPTIONS[4];
+    case AC_LOUVERH_SWING_BELOWMIDDLE: return LOUVER_OPTIONS[5];
+    case AC_LOUVERH_SWING_BOTTOM: return LOUVER_OPTIONS[6];
+    case AC_LOUVERH_SWING_MIDDLE_TO_BOTTOM: return LOUVER_OPTIONS[7];
+    case AC_LOUVERH_SWING_ABOVEMIDDLE_TO_BELOWMIDDLE: return LOUVER_OPTIONS[8];
+    case AC_LOUVERH_SWING_MIDDLE_TO_TOP: return LOUVER_OPTIONS[9];
+    default: return LOUVER_OPTIONS[0];
+  }
+}
+
+void GreeClimate::set_louver(const std::string &value) {
+  uint8_t raw = AC_LOUVERH_OFF;
+  if (value == LOUVER_OPTIONS[1]) raw = AC_LOUVERH_SWING_FULL;
+  else if (value == LOUVER_OPTIONS[2]) raw = AC_LOUVERH_SWING_TOP;
+  else if (value == LOUVER_OPTIONS[3]) raw = AC_LOUVERH_SWING_ABOVEMIDDLE;
+  else if (value == LOUVER_OPTIONS[4]) raw = AC_LOUVERH_SWING_MIDDLE;
+  else if (value == LOUVER_OPTIONS[5]) raw = AC_LOUVERH_SWING_BELOWMIDDLE;
+  else if (value == LOUVER_OPTIONS[6]) raw = AC_LOUVERH_SWING_BOTTOM;
+  else if (value == LOUVER_OPTIONS[7]) raw = AC_LOUVERH_SWING_MIDDLE_TO_BOTTOM;
+  else if (value == LOUVER_OPTIONS[8]) raw = AC_LOUVERH_SWING_ABOVEMIDDLE_TO_BELOWMIDDLE;
+  else if (value == LOUVER_OPTIONS[9]) raw = AC_LOUVERH_SWING_MIDDLE_TO_TOP;
+  this->louver_ = raw;
+  data_write_[SWING] = raw;
+  send_updated_state_();
+  if (this->louver_select_ != nullptr)
+    this->louver_select_->publish_state(this->louver_name_(raw));
 }
 
 void GreeClimate::send_data_(const uint8_t *message, uint8_t size) {
@@ -389,6 +457,27 @@ uint8_t GreeClimate::get_checksum_(const uint8_t *message, size_t size) {
     sum += message[i];
   uint8_t crc = sum % 256;
   return crc;
+}
+
+void GreeFeatureSwitch::write_state(bool state) {
+  if (this->parent_ == nullptr)
+    return;
+  switch (this->feature_) {
+    case GreeFeature::SLEEP:
+      this->parent_->set_sleep(state);
+      break;
+    case GreeFeature::DISPLAY_LIGHT:
+      this->parent_->set_display(state);
+      break;
+    case GreeFeature::TURBO:
+      this->parent_->set_turbo(state);
+      break;
+  }
+}
+
+void GreeLouverSelect::control(const std::string &value) {
+  if (this->parent_ != nullptr)
+    this->parent_->set_louver(value);
 }
 
 }  // namespace gree
