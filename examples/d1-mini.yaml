@@ -1,5 +1,6 @@
 # Example for a common, cheap ESP8266 board (Wemos D1 Mini) wired to the
-# AC's internal UART control board, with full logging of the AC's own state.
+# AC's internal UART control board, with MQTT (Home Assistant discovery +
+# an online/offline heartbeat) and full logging of the AC's own state.
 # Pulls this component straight from GitHub - no manual download needed.
 #
 # 1. Copy this file next to a `secrets.yaml` with the keys listed in
@@ -12,6 +13,8 @@ substitutions:
   log_level: "ERROR"
   deviceid: "gree_ac_${location}"
   devicename: "Gree AC ${location}"
+  # MQTT topic prefix - change to whatever you use, does not need to match anyone else's.
+  tp: "home/ac/${location}"
 
 esphome:
   name: ${deviceid}
@@ -39,6 +42,45 @@ wifi:
     password: !secret ap_password
 
 captive_portal:
+
+mqtt:
+  broker: !secret mqtt_broker
+  port: 1883
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  keepalive: 15s
+  discovery: true
+  discovery_prefix: homeassistant
+  topic_prefix: ${tp}
+
+  will_message:
+    topic: "${tp}/status"
+    payload: "offline"
+    qos: 1
+    retain: true
+
+  on_connect:
+    then:
+      - lambda: |-
+          id(mqtt_connected) = true;
+          ESP_LOGI("mqtt", "== MQTT CONNECTED ==");
+      - mqtt.publish:
+          topic: "${tp}/status"
+          payload: "online"
+          qos: 1
+          retain: true
+
+  on_disconnect:
+    then:
+      - lambda: |-
+          id(mqtt_connected) = false;
+          ESP_LOGI("mqtt", "== MQTT DISCONNECTED ==");
+
+globals:
+  - id: mqtt_connected
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 uart:
   tx_pin: GPIO1
@@ -88,3 +130,16 @@ climate:
             }
 
             ESP_LOGI("gree", "Target Temp: %.1f", id(gree_ac).target_temperature);
+
+interval:
+  - interval: 600s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(mqtt_connected);'
+          then:
+            - mqtt.publish:
+                topic: "${tp}/status"
+                payload: "online"
+                qos: 1
+                retain: true
