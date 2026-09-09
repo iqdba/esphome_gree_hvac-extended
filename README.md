@@ -13,12 +13,25 @@ This wires an ESP board directly into your AC's internal control board, inside t
 - This project only covers the ESP/ESPHome side. It does **not** tell you where to find the low-voltage service UART header on your specific AC model — that connector's location and pinout vary by brand and board revision. Search for wiring info specific to your exact model/mainboard before opening it up, and only connect the ESP once you're sure which pins are TX/RX/GND on the AC side (cross TX↔RX, share GND) and that they're 3.3V logic, not mains-adjacent.
 - You're modifying a working appliance. Do this at your own risk.
 
+## Wiring (observed on the tested units above)
+
+On the units this fork was tested on, the AC mainboard exposes a small 4-pin connector (marked `CHU4` on the board silkscreen) wiring straight to a Wemos D1 Mini like this:
+
+| AC connector wire | D1 Mini pin | Purpose |
+|---|---|---|
+| Yellow | `5V` | Power |
+| Brown | `G` | Ground |
+| White | `RX` | AC's TX → ESP's RX |
+| Green | `TX` | ESP's TX → AC's RX |
+
+**Wire colors are not a universal standard** — they can differ by production batch even on the same AC model. Treat this table as a strong hint for Gree boards using the same `CHU4`-style connector, not a guarantee for yours. Confirm continuity/labels on your own board (or search for wiring reports on your exact model) before connecting anything, and only proceed once the AC is unplugged as described above.
+
 ## What you need
 
 - An ESP8266 or ESP32 board — [`examples/d1-mini.yaml`](examples/d1-mini.yaml) targets a cheap Wemos D1 Mini (ESP8266).
 - A USB data cable (not charge-only) to flash it the first time.
 - [ESPHome](https://esphome.io/guides/installing_esphome) installed on a computer: `pip install esphome` (needs Python 3), or the ESPHome add-on inside Home Assistant.
-- Access to the AC's internal service UART (see the safety note above) and 3-4 jumper wires (TX, RX, GND, sometimes 3.3V).
+- Access to the AC's internal service UART (see **Wiring** above) and 3-4 jumper wires (TX, RX, GND, 5V).
 - Your WiFi network's name/password, and — if you want Home Assistant integration — an MQTT broker's address/username/password.
 
 The component is tested on the following units:
