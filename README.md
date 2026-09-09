@@ -15,7 +15,9 @@ This wires an ESP board directly into your AC's internal control board, inside t
 
 ## Wiring (observed on the tested units above)
 
-On the units this fork was tested on, the AC mainboard exposes a small 4-pin connector (marked `CHU4` on the board silkscreen) wiring straight to a Wemos D1 Mini like this:
+On practically all these Gree mainboards there's already a spare connector on the board meant for the manufacturer's own optional WiFi module — look for a small connector labeled **"Wi-Fi"** right on the board silkscreen. That's the one to use; you don't need to hunt for an undocumented debug header.
+
+On the units this fork was tested on, that connector is a small 4-pin part (marked `CHU4` on the board silkscreen) wiring straight to a Wemos D1 Mini like this:
 
 | AC connector wire | D1 Mini pin | Purpose |
 |---|---|---|
