@@ -32,6 +32,8 @@ On the units this fork was tested on, that connector is a small 4-pin part (mark
 
 **Wire colors are not a universal standard** — they can differ by production batch even on the same AC model. Treat this table as a strong hint for Gree boards using the same `CHU4`-style connector, not a guarantee for yours. Confirm continuity/labels on your own board (or search for wiring reports on your exact model) before connecting anything, and only proceed once the AC is unplugged as described above.
 
+A matching 4-pin `CHU4` housing plus crimp pins is a standard, widely stocked connector part — sold individually at most electronics component suppliers if you need to make your own cable instead of splicing into the existing one.
+
 ## What you need
 
 - An ESP8266 or ESP32 board — [`examples/d1-mini.yaml`](examples/d1-mini.yaml) targets a cheap Wemos D1 Mini (ESP8266).
