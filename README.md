@@ -19,6 +19,10 @@ On practically all these Gree mainboards there's already a spare connector on th
 
 On the units this fork was tested on, that connector is a small 4-pin part (marked `CHU4` on the board silkscreen) wiring straight to a Wemos D1 Mini like this:
 
+![CHU4 connector wired to a D1 Mini](docs/wiring-d1-mini.jpg)
+
+*Connector shown with its latch/tab facing the camera — use that orientation to match wire order to pin order.*
+
 | AC connector wire | D1 Mini pin | Purpose |
 |---|---|---|
 | Yellow | `5V` | Power |
