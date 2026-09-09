@@ -52,7 +52,12 @@ climate:
 
 Run `esphome run <your-config>.yaml` — ESPHome fetches this component automatically on the first compile, and every entity above (climate + 3 switches + 1 select) shows up ready to use, no extra wiring in the YAML required.
 
-For a complete, ready-to-flash device config (WiFi, board package, UART pins, all entities included), see [`examples/iot-uni-dongle.yaml`](examples/iot-uni-dongle.yaml) — copy it, fill in your WiFi `!secret`s, and flash.
+For a complete, ready-to-flash device config, see:
+
+- [`examples/d1-mini.yaml`](examples/d1-mini.yaml) — a cheap, common Wemos D1 Mini (ESP8266) wired directly to the AC's UART, with logging of the AC's own state. No extra hardware package needed.
+- [`examples/iot-uni-dongle.yaml`](examples/iot-uni-dongle.yaml) — for the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) board.
+
+Both need a `secrets.yaml` next to them — copy [`examples/secrets.yaml.example`](examples/secrets.yaml.example) to `examples/secrets.yaml` and fill in your own WiFi/OTA/AP values (never commit `secrets.yaml` — it's already in `.gitignore`).
 
 ## Why this fork exists
 
