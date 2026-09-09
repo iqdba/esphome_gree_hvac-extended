@@ -144,7 +144,7 @@ For the [dudanov IOT-UNI dongle](https://github.com/dudanov/esphome-packages) bo
 
 ## Control from your phone (IoT MQTT Panel)
 
-You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/app/iot-mqtt-panel/id1533052132)** is a free iPhone app (English UI) that connects straight to your MQTT broker — the same one you already configured in the YAML — and lets you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
+You don't need Home Assistant just to get a nice control screen. **[IoT MQTT Panel](https://apps.apple.com/us/app/iot-mqtt-panel/id6466780124)** is a free iPhone app (English UI) — not the paid "Pro" version that connects straight to your MQTT broker — the same one you already configured in the YAML — and lets you build your own dashboard: a widget per AC with a mode dropdown, a temperature gauge/slider, and a fan-speed dropdown.
 
 The topic path isn't fixed — it's whatever you set `tp:` to in the YAML (`home/ac/<location>` by default). When you add each widget's topic in the app, use that same prefix followed by the paths in [`MQTT_TOPICS.md`](MQTT_TOPICS.md) — e.g. with the defaults, the office unit's target temperature is `home/ac/office/climate/gree_ac/target_temperature/command`.
 
